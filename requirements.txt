@@ -1,0 +1,12 @@
+cadquery>=2.4
+numpy
+scipy
+pyvista
+matplotlib
+trimesh
+reportlab
+openpyxl
+pandas
+pillow
+pymupdf
+networkx

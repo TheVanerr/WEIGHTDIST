@@ -1,0 +1,23 @@
+{
+  "name": "KBN 1B P DS MULTİ 1350",
+  "code": "C061176",
+  "step": "C061176.STEP",
+  "up_axis": "Y",
+  "feet_part": "C004467",
+  "pad_d_mm": 108.0,
+  "trolley_root": "C011459",
+  "caster_parts": ["C011192", "C011193"],
+  "flex_panel_token": "C032692_Flex",
+  "pvc_flex_parts": ["C032696", "C032697", "C032698", "C032701", "C032693", "C032694", "C032695", "C032700"],
+  "explicit_materials": {
+    "C033081": "POMPA", "C000368_Varsayılan": "MOTOR_FAN", "C003705_Varsayılan": "MOTOR_FAN",
+    "C001578_Varsayılan": "MOTOR_FAN", "C008436": "HORTUM", "C047983": "PEDAL",
+    "C011192": "TEKERLEK", "C011193": "TEKERLEK",
+    "C011178_ISO - Spur gear 6M 14T 20PA 50FW ---S14A75H50L25.0R1": "CELIK",
+    "C000808": "CELIK", "C000735": "CELIK", "C008055": "CELIK", "C000515": "CELIK"
+  },
+  "tank": {"x0": 157, "x1": 651, "z0": -573, "z1": 720, "y_bottom_lo": 231, "y_bottom_hi": 270, "level": 550},
+  "basket_path_token": "C058280_CLOSED",
+  "payload_kg": 300.0,
+  "payload_y_mm": 1000.0
+}
