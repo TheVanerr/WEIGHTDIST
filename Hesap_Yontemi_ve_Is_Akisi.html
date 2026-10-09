@@ -1,0 +1,472 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Hesap Yöntemi ve İş Akışı</title>
+<meta name="description" content="Ayaklara gelen ağırlık dağılımı raporunun nasıl üretildiği: STEP okuma, malzeme ataması, kütle/ağırlık merkezi, ayak reaksiyonu formülleri, yük senaryoları ve rapor üretim akışı. Örnek: C061176.">
+<style>
+:root{
+  --bg:#f6f7f9; --paper:#ffffff; --ink:#1b2430; --muted:#5b6673; --line:#d7dde4;
+  --navy:#1c3d5a; --accent:#2a78d6; --orange:#eb6834; --green:#1baf7a; --red:#d62728;
+  --head:#e8eef4; --zebra:#f3f6f9; --code:#eef2f6; --note:#fff7e6; --note-line:#f2c35b; --onnavy:#ffffff;
+}
+@media (prefers-color-scheme: dark){
+  :root:not([data-theme="light"]){
+    --bg:#111518; --paper:#1a2026; --ink:#e6ebf0; --muted:#9aa6b2; --line:#303a44;
+    --navy:#9cc3e6; --accent:#5fa3ee; --head:#232c35; --zebra:#1f262d; --code:#242d36; --note:#2b2614; --note-line:#8a6d1f; --onnavy:#111518;
+  }
+}
+:root[data-theme="dark"]{
+  --bg:#111518; --paper:#1a2026; --ink:#e6ebf0; --muted:#9aa6b2; --line:#303a44;
+  --navy:#9cc3e6; --accent:#5fa3ee; --head:#232c35; --zebra:#1f262d; --code:#242d36; --note:#2b2614; --note-line:#8a6d1f; --onnavy:#111518;
+}
+*{box-sizing:border-box}
+html,body{margin:0;background:var(--bg);color:var(--ink);font-family:"Segoe UI","Helvetica Neue",Arial,sans-serif;font-size:15px;line-height:1.55}
+body{background:var(--bg)}
+.wrap{max-width:980px;margin:0 auto;padding:24px 16px 60px}
+header.hero{background:var(--paper);border:1px solid var(--line);border-radius:12px;padding:28px 28px 22px;margin-bottom:22px}
+header.hero h1{font-family:Georgia,"Times New Roman",serif;color:var(--navy);font-size:28px;line-height:1.2;margin:0 0 8px}
+header.hero p.lead{font-size:16px;color:var(--muted);margin:0 0 12px}
+.meta{display:flex;flex-wrap:wrap;gap:8px 18px;font-size:13px;color:var(--muted)}
+.meta b{color:var(--ink)}
+nav.toc{background:var(--paper);border:1px solid var(--line);border-radius:12px;padding:16px 22px;margin-bottom:22px}
+nav.toc h2{font-size:14px;letter-spacing:.06em;text-transform:uppercase;color:var(--muted);margin:0 0 8px;border:0;padding:0;font-family:"Segoe UI",Arial,sans-serif}
+nav.toc ol{margin:0;padding-left:22px;columns:2;column-gap:28px}
+nav.toc li{margin:3px 0;break-inside:avoid}
+nav.toc a{color:var(--accent);text-decoration:none}
+nav.toc a:hover{text-decoration:underline}
+section{background:var(--paper);border:1px solid var(--line);border-radius:12px;padding:22px 28px;margin-bottom:22px}
+h2{font-family:Georgia,"Times New Roman",serif;color:var(--navy);font-size:21px;margin:0 0 12px;padding-bottom:6px;border-bottom:2px solid var(--line)}
+h3{font-size:16px;color:var(--navy);margin:20px 0 6px}
+p{margin:0 0 10px}
+ul,ol{margin:0 0 10px;padding-left:24px}
+li{margin:3px 0}
+code,.k{font-family:Consolas,"Cascadia Mono",Menlo,monospace;font-size:.92em;background:var(--code);padding:1px 5px;border-radius:4px}
+pre{background:var(--code);border:1px solid var(--line);border-radius:8px;padding:12px 14px;overflow:auto;font-size:13px;line-height:1.45;margin:8px 0 14px}
+.formula{background:var(--code);border-left:4px solid var(--accent);border-radius:6px;padding:10px 16px;margin:10px 0 14px;font-family:"Cambria Math",Cambria,Georgia,serif;font-size:17px;overflow-x:auto}
+.formula small{display:block;font-family:"Segoe UI",Arial,sans-serif;font-size:13px;color:var(--muted);margin-top:4px}
+.note{background:var(--note);border-left:4px solid var(--note-line);border-radius:6px;padding:10px 16px;margin:10px 0 14px;font-size:14px}
+table{border-collapse:collapse;width:100%;font-size:13.5px;margin:8px 0 14px}
+th,td{border:1px solid var(--line);padding:6px 9px;text-align:left;vertical-align:top}
+th{background:var(--head);font-weight:600}
+tbody tr:nth-child(even) td{background:var(--zebra)}
+td.num,th.num{text-align:right;font-variant-numeric:tabular-nums;white-space:nowrap}
+.tblwrap{overflow-x:auto}
+.pipe{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:10px;margin:12px 0 16px}
+.step{border:1px solid var(--line);border-radius:10px;padding:10px 12px;background:var(--zebra)}
+.step .n{display:inline-block;background:var(--navy);color:var(--onnavy);border-radius:999px;font-size:12px;font-weight:700;width:22px;height:22px;line-height:22px;text-align:center;margin-bottom:6px}
+.step b{display:block;font-size:14px}
+.step span{display:block;font-size:12.5px;color:var(--muted);margin-top:3px}
+@media (max-width:720px){nav.toc ol{columns:1} section{padding:18px 16px}}
+figure{margin:10px 0 14px;text-align:center}
+figcaption{font-size:13px;color:var(--muted);margin-top:6px}
+svg text{font-family:"Segoe UI",Arial,sans-serif}
+footer{font-size:13px;color:var(--muted);text-align:center;margin-top:10px}
+</style>
+</head>
+<body>
+<div class="wrap">
+
+<header class="hero">
+  <h1>Ayaklara Gelen Ağırlık Dağılımı Raporu<br>Hesap Yöntemi ve İş Akışı</h1>
+  <p class="lead">Rapor motorunun bir STEP montajından başlayıp 36 sayfalık çok dilli PDF, HTML ve Excel çıktısına kadar yaptığı her işlem, kullanılan formüller ve varsayımlar. Sayısal örnekler C061176 (KBN 1B P DS MULTİ 1350, AISI 316) makinesine aittir.</p>
+  <div class="meta">
+    <span>Motor: <b>scripts/</b> klasörü (Python 3.12 + OpenCASCADE)</span>
+    <span>Örnek makine: <b>C061176</b></span>
+    <span>Kalite: <b>AISI 316 / 1.4401</b> (304 için aynı akış)</span>
+    <span>Doküman tarihi: <b>09.10.2026</b></span>
+  </div>
+</header>
+
+<nav class="toc">
+  <h2>İçindekiler</h2>
+  <ol>
+    <li><a href="#akis">Genel iş akışı</a></li>
+    <li><a href="#step">STEP dosyasının okunması</a></li>
+    <li><a href="#malzeme">Malzeme sınıfı ve yoğunluk ataması</a></li>
+    <li><a href="#kutle">Kütle ve ağırlık merkezi</a></li>
+    <li><a href="#ayak">Ayak konumlarının bulunması</a></li>
+    <li><a href="#yukler">Yük senaryoları (su, sepet yükü)</a></li>
+    <li><a href="#reaksiyon">Ayak reaksiyonlarının çözümü</a></li>
+    <li><a href="#turev">Türetilen büyüklükler</a></li>
+    <li><a href="#araba">Yükleme arabası</a></li>
+    <li><a href="#altmontaj">Alt montaj kırılımı</a></li>
+    <li><a href="#kalite">316 / 304 kalite anahtarı</a></li>
+    <li><a href="#gorsel">3D görseller ve grafikler</a></li>
+    <li><a href="#rapor">Rapor üretimi (PDF, HTML, Excel)</a></li>
+    <li><a href="#varsayim">Varsayımlar ve sınırlamalar</a></li>
+    <li><a href="#sonuc">C061176 sonuç özeti</a></li>
+    <li><a href="#dosya">Dosya haritası</a></li>
+  </ol>
+</nav>
+
+<section id="akis">
+  <h2>1. Genel iş akışı</h2>
+  <p>Motor altı betikten oluşur. Her biri bir öncekinin çıktısını okur; ara sonuçlar makine klasöründeki <code>output/</code> (316) veya <code>output_304/</code> klasörüne yazılır. Hangi makinenin ve hangi kalitenin işleneceği <code>MACHINE</code> ve <code>GRADE</code> ortam değişkenleriyle seçilir; makineye özgü tüm ayarlar <code>machine.json</code> dosyasındadır.</p>
+  <div class="pipe">
+    <div class="step"><span class="n">1</span><b>extract_step.py</b><span>STEP → her parça örneği için hacim, alan, ağırlık merkezi, bbox + STL mesh</span></div>
+    <div class="step"><span class="n">2</span><b>compute.py</b><span>Malzeme ataması, kütle, AM, ayak reaksiyonları, duyarlılık → summary.json, csv, xlsx</span></div>
+    <div class="step"><span class="n">3</span><b>figures.py</b><span>PyVista 3D render + matplotlib grafikleri, 3 dil için</span></div>
+    <div class="step"><span class="n">4</span><b>report_multi.py</b><span>İçerik modeli (bloklar) → 36 sayfalık TR+EN+DE PDF</span></div>
+    <div class="step"><span class="n">5</span><b>html_report.py</b><span>Aynı bloklar → tek dosya A4 sayfalı HTML, dil seçici, PDF butonu</span></div>
+    <div class="step"><span class="n">6</span><b>tr_pdf.py</b><span>36 sayfalık PDF'ten 12 sayfalık TR PDF kesme</span></div>
+  </div>
+  <p>Geometri (adım 1) kaliteden bağımsızdır ve bir kez çalıştırılır. Adım 2–6, <code>GRADE=316</code> ve <code>GRADE=304</code> için ayrı ayrı tekrarlanır.</p>
+<pre>set MACHINE=KBN 1B P DS MULTİ 1350
+set GRADE=316
+.venv\Scripts\python.exe scripts\extract_step.py
+.venv\Scripts\python.exe -X utf8 scripts\compute.py
+.venv\Scripts\python.exe -X utf8 scripts\figures.py
+.venv\Scripts\python.exe -X utf8 scripts\report_multi.py
+.venv\Scripts\python.exe -X utf8 scripts\html_report.py
+.venv\Scripts\python.exe -X utf8 scripts\tr_pdf.py</pre>
+  <h3>Eksen takımı ve adlandırma</h3>
+  <ul>
+    <li>Birim mm. <b>+Y düşey (yukarı)</b>; zemin kotu Y = 0, ayak tabanlarının alt yüzü.</li>
+    <li><b>+X = ÖN</b> (yükleme arabası tarafı), <b>−Z = SAĞ</b> (elektrik panosu tarafı).</li>
+    <li>Ayaklar X ve Z işaretine göre adlandırılır: F1 Ön-Sol (+X,+Z), F2 Ön-Sağ (+X,−Z), F3 Arka-Sağ (−X,−Z), F4 Arka-Sol (−X,+Z).</li>
+  </ul>
+</section>
+
+<section id="step">
+  <h2>2. STEP dosyasının okunması (extract_step.py)</h2>
+  <p>Dosya OpenCASCADE'in XCAF katmanı ile okunur (<code>STEPCAFControl_Reader</code>, isim ve renk modu açık). Böylece yalnızca katı gövdeler değil, montaj ağacı, parça adları ve her örneğin (instance) konum matrisi de alınır.</p>
+  <h3>Montaj ağacında dolaşma</h3>
+  <ol>
+    <li>Kök serbest şekillerden başlanır (<code>GetFreeShapes</code>).</li>
+    <li>Bir etiket <b>montaj</b> ise bileşenleri gezilir; her bileşenin yerel konumu üst konumla çarpılır: <span class="k">loc_global = loc_üst × loc_bileşen</span>. Bileşen bir referans ise referans verilen asıl şekle gidilir.</li>
+    <li>Bir etiket <b>parça</b> ise sıradaki örnek numarası (<code>idx</code>) verilir ve aşağıdaki büyüklükler hesaplanır.</li>
+  </ol>
+  <h3>Her parça örneği için hesaplananlar</h3>
+  <div class="tblwrap"><table>
+    <thead><tr><th>Büyüklük</th><th>Yöntem</th><th>Kullanım</th></tr></thead>
+    <tbody>
+      <tr><td>Hacim V (mm³)</td><td><code>BRepGProp.VolumeProperties</code>, yerel şekil üzerinde</td><td>Kütle hesabı</td></tr>
+      <tr><td>Yüzey alanı A (mm²)</td><td><code>BRepGProp.SurfaceProperties</code></td><td>Sac kalınlığı tahmini t ≈ 2V/A</td></tr>
+      <tr><td>Ağırlık merkezi (x, y, z)</td><td>Konum matrisi uygulanmış <b>global</b> şekil üzerinde <code>VolumeProperties().CentreOfMass()</code></td><td>Toplam AM, moment</td></tr>
+      <tr><td>Sınır kutusu (yerel ve global)</td><td><code>BRepBndLib.Add</code></td><td>Ayak/tekerlek merkezleri, sac tespiti, boyutlar</td></tr>
+      <tr><td>Katı sayısı</td><td><code>TopExp_Explorer(TopAbs_SOLID)</code></td><td>Pano içi sınıflandırma</td></tr>
+      <tr><td>STL mesh</td><td><code>BRepMesh_IncrementalMesh</code> (doğrusal sapma 1,0 mm, açısal 0,3 rad), ikili STL</td><td>3D render</td></tr>
+    </tbody>
+  </table></div>
+  <p>Hacmi hesaplanamayan ya da sıfır olan örnekler (boş gövde, bozuk geometri) kaydedilir fakat kütle hesabında <b>EXCLUDED_NOVOL</b> grubuna atılır. Sonuç <code>output/instances.json</code> (C061176 için 762 örnek) ve <code>output/meshes/NNNN.stl</code> dosyalarıdır.</p>
+  <div class="note">Hacim ve alan yerel şekil üzerinde hesaplanır (konum dönüşümü hacmi değiştirmez), ağırlık merkezi ise global şekil üzerinde alınır. Böylece aynı parçanın 4 kopyası (ör. ayaklar) her biri kendi yerinde doğru AM ile kaydedilir.</div>
+</section>
+
+<section id="malzeme">
+  <h2>3. Malzeme sınıfı ve yoğunluk ataması (compute.py)</h2>
+  <p>STEP dosyasında malzeme bilgisi yoktur. Her parçaya, aşağıdaki sırayla uygulanan kurallarla bir <b>malzeme sınıfı</b> ve o sınıfın yoğunluğu atanır. İlk eşleşen kural kazanır.</p>
+  <ol>
+    <li><b>Açık liste</b> (<code>machine.json → explicit_materials</code>): pompa, motor, fan, redüktör, hortum, pedal, tekerlek, dişli, vana gibi parçalar parça numarasıyla doğrudan sınıfa bağlanır.</li>
+    <li>Parça adında <code>GALV</code> geçiyorsa → <b>GALV_CELIK</b> (galvanizli cıvata/somun).</li>
+    <li>Parça adında <code>INOX</code> geçiyorsa → <b>A4_INOX</b> (paslanmaz bağlantı elemanı).</li>
+    <li>Parça <b>elektrik panosu alt montajında</b> ise (<code>flex_panel_token</code> yolda geçiyor):
+      <ul>
+        <li><code>pvc_flex_parts</code> listesindeyse → <b>PVC_KANAL</b>;</li>
+        <li>t ≈ 2V/A ≤ 2,1 mm, en büyük boyut ≥ 190 mm ve tek katı ise → pano gövdesi / montaj plakası → <b>AISI316_SAC</b>;</li>
+        <li>aksi halde → <b>ELEKTRIK</b> (kontaktör, sürücü, klemens vb. efektif yoğunluk).</li>
+      </ul></li>
+    <li>Hiçbiri değilse → <b>AISI316_SAC</b> (varsayılan: sac, profil, boru, işlenmiş paslanmaz).</li>
+  </ol>
+  <h3>Yoğunluk tablosu</h3>
+  <div class="tblwrap"><table>
+    <thead><tr><th>Sınıf</th><th class="num">ρ (g/cm³)</th><th>Açıklama</th><th class="num">C061176 kütle (kg)</th><th class="num">Adet</th></tr></thead>
+    <tbody>
+      <tr><td>AISI316_SAC</td><td class="num">8,00</td><td>AISI 316 (1.4401) sac / profil / işlenmiş paslanmaz (EN 10088-1). 304 kalitede 7,90</td><td class="num">637,6</td><td class="num">427</td></tr>
+      <tr><td>A4_INOX</td><td class="num">8,00</td><td>A4 paslanmaz bağlantı elemanı (304 kalitede A2, 7,90)</td><td class="num">0,4</td><td class="num">32</td></tr>
+      <tr><td>GALV_CELIK</td><td class="num">7,85</td><td>Galvanizli karbon çeliği bağlantı elemanı</td><td class="num">0,5</td><td class="num">9</td></tr>
+      <tr><td>CELIK</td><td class="num">7,85</td><td>Dişli, vana, rulman yuvası vb.</td><td class="num">13,7</td><td class="num">8</td></tr>
+      <tr><td>POMPA</td><td class="num">7,00</td><td>Santrifüj pompa + motor, efektif</td><td class="num">22,5</td><td class="num">1</td></tr>
+      <tr><td>MOTOR_FAN</td><td class="num">6,00</td><td>Elektrik motoru / fan / redüktör, efektif</td><td class="num">38,1</td><td class="num">3</td></tr>
+      <tr><td>ELEKTRIK</td><td class="num">3,00</td><td>Pano elektrik bileşeni, efektif</td><td class="num">17,6</td><td class="num">127</td></tr>
+      <tr><td>PVC_KANAL</td><td class="num">1,45</td><td>PVC kablo kanalı</td><td class="num">2,0</td><td class="num">14</td></tr>
+      <tr><td>HORTUM</td><td class="num">1,00</td><td>Hortum + püskürtme tabancası, efektif</td><td class="num">3,0</td><td class="num">1</td></tr>
+      <tr><td>TEKERLEK</td><td class="num">4,50</td><td>PU tekerlek + çelik çatal, efektif (yalnız arabada)</td><td class="num">—</td><td class="num">—</td></tr>
+      <tr><td>PEDAL</td><td class="num">1,20</td><td>Ayak pedalı şalter, yerde durur</td><td class="num">(1,5, hariç)</td><td class="num">1</td></tr>
+    </tbody>
+  </table></div>
+  <h3>Efektif yoğunluk neden kullanılır?</h3>
+  <p>Satın alma parçaları (motor, pompa, fan, pano elemanları) STEP'te <b>dolu katı</b> olarak modellenmiştir. Gerçekte sargı, hava boşluğu, alüminyum gövde ve plastik içerirler; dolu çelik yoğunluğu (7,85) kullanılsa kütleleri 2–3 kat fazla çıkar. Bu yüzden katalog kütleleriyle uyumlu düşük "efektif" yoğunluklar atanır. Katalog değeri biliniyorsa yoğunluk ρ = m<sub>katalog</sub> / V<sub>STEP</sub> olarak doğrudan güncellenebilir.</p>
+  <h3>Sac kalınlığı tahmini</h3>
+  <div class="formula">t ≈ 2·V / A<small>Bir levhada V = A<sub>yüz</sub>·t ve toplam yüzey A ≈ 2·A<sub>yüz</sub> (kenar yüzeyleri ihmal) olduğundan t ≈ 2V/A. Her parça için hesaplanır; sac parçaların 1,5 / 2,0 / 3,0 mm ve 33,7 mm boru etrafında kümelenmesi modelin doğrulanmasında kullanılır.</small></div>
+</section>
+
+<section id="kutle">
+  <h2>4. Kütle ve ağırlık merkezi</h2>
+  <h3>Parça kütlesi</h3>
+  <div class="formula">m<sub>i</sub> [kg] = V<sub>i</sub> [mm³] / 1000 · ρ<sub>i</sub> [g/cm³] / 1000<small>mm³ → cm³ için ÷1000, g → kg için ÷1000.</small></div>
+  <h3>Gruplama</h3>
+  <div class="tblwrap"><table>
+    <thead><tr><th>Grup</th><th>Kural</th><th>Hesaba etkisi</th><th class="num">C061176 adet</th></tr></thead>
+    <tbody>
+      <tr><td>MACHINE</td><td>Varsayılan</td><td>Makine kütlesi ve ayak yükleri</td><td class="num">622</td></tr>
+      <tr><td>TROLLEY</td><td>Montaj yolunda <code>trolley_root</code> (C011459) geçiyor</td><td>Ayrı sistem, kendi tekerlekleri üzerinde çözülür</td><td class="num">134</td></tr>
+      <tr><td>FLOOR_ITEM</td><td>Malzeme sınıfı PEDAL</td><td>Zeminde durur, hariç</td><td class="num">1</td></tr>
+      <tr><td>EXCLUDED_NOVOL</td><td>V ≤ 0 veya AM hesaplanamadı</td><td>Hariç (kütle etkisi ihmal edilebilir)</td><td class="num">5</td></tr>
+    </tbody>
+  </table></div>
+  <h3>Toplam kütle ve ağırlık merkezi (AM)</h3>
+  <div class="formula">M = Σ m<sub>i</sub> &nbsp;&nbsp;&nbsp;&nbsp; <b>r</b><sub>AM</sub> = Σ m<sub>i</sub>·<b>r</b><sub>i</sub> / M<small>Kütle ağırlıklı ortalama; her bileşen (x, y, z) için ayrı ayrı. Aynı formül grup, alt montaj ve senaryo birleştirmelerinde kullanılır.</small></div>
+  <p>C061176 için makine kuru kütlesi <b>735,4 kg</b>, AM = (135, 1107, −52) mm. AM, 1 456 mm'lik ayak karesinin merkezine göre X yönünde %9, Z yönünde %4 kaçıktır (yarı açıklık 728 mm'ye oranla).</p>
+</section>
+
+<section id="ayak">
+  <h2>5. Ayak konumlarının bulunması</h2>
+  <ol>
+    <li><code>instances.json</code> içinde adı <code>feet_part</code> (C004467, Ø108 taban plakası) olan tüm örnekler seçilir; 4 adet bulunur.</li>
+    <li>Her birinin plan konumu global sınır kutusunun merkezi alınarak hesaplanır: x = (x<sub>min</sub>+x<sub>max</sub>)/2, z = (z<sub>min</sub>+z<sub>max</sub>)/2; taban kotu y<sub>min</sub> ≈ 0 kontrol edilir.</li>
+    <li>Ayaklar önce X azalan, sonra Z azalan sırayla dizilir ve işaretlerine göre adlandırılır: F1 (+728, +728) Ön-Sol, F2 (+728, −728) Ön-Sağ, F3 (−728, −728) Arka-Sağ, F4 (−728, +728) Arka-Sol.</li>
+    <li>Taban alanı: A<sub>taban</sub> = π·d²/4 = π·10,8²/4 = <b>91,6 cm²</b>.</li>
+  </ol>
+  <figure>
+    <svg viewBox="0 0 420 330" width="100%" style="max-width:460px" role="img" aria-label="Plan görünüşte dört ayak ve üç senaryonun ağırlık merkezi izdüşümleri">
+      <defs><marker id="ah" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto"><path d="M0,0 L10,5 L0,10 z" fill="currentColor"/></marker></defs>
+      <rect x="79" y="39" width="262" height="262" fill="none" stroke="var(--orange)" stroke-width="2" stroke-dasharray="6 4"/>
+      <g stroke="var(--muted)" stroke-width="1" stroke-dasharray="3 3"><line x1="210" y1="30" x2="210" y2="310"/><line x1="70" y1="170" x2="350" y2="170"/></g>
+      <g fill="var(--orange)"><circle cx="79" cy="39" r="7"/><circle cx="341" cy="39" r="7"/><circle cx="341" cy="301" r="7"/><circle cx="79" cy="301" r="7"/></g>
+      <g font-size="12" fill="var(--ink)" font-weight="600">
+        <text x="20" y="30">F1 Ön-Sol</text><text x="300" y="30">F2 Ön-Sağ</text>
+        <text x="292" y="322">F3 Arka-Sağ</text><text x="22" y="322">F4 Arka-Sol</text>
+      </g>
+      <g font-size="11" fill="var(--muted)"><text x="20" y="48">(+728, +728)</text><text x="300" y="48">(+728, −728)</text><text x="292" y="294">(−728, −728)</text><text x="22" y="294">(−728, +728)</text></g>
+      <circle cx="219.4" cy="145.7" r="6" fill="var(--red)"/>
+      <circle cx="214.7" cy="135.7" r="6" fill="var(--accent)"/>
+      <circle cx="213.6" cy="143.9" r="6" fill="var(--green)"/>
+      <g font-size="11.5" fill="var(--ink)">
+        <text x="232" y="150">A kuru (135, −52)</text>
+        <text x="226" y="131">B su (190, −26)</text>
+        <text x="203" y="147" text-anchor="end">C su+yük (145, −20)</text>
+      </g>
+      <g stroke="var(--ink)" stroke-width="1.4" color="var(--ink)">
+        <line x1="385" y1="250" x2="385" y2="205" marker-end="url(#ah)"/>
+        <line x1="385" y1="250" x2="360" y2="250" marker-end="url(#ah)"/>
+      </g>
+      <text x="391" y="212" font-size="11" fill="var(--ink)">+X ön</text>
+      <text x="352" y="270" font-size="11" fill="var(--ink)">+Z sol</text>
+      <text x="210" y="265" font-size="11" fill="var(--muted)" text-anchor="middle">ayak karesi 1 456 × 1 456 mm</text>
+    </svg>
+    <figcaption>Üstten bakış (+Y). Turuncu: ayak merkezleri; kırmızı/mavi/yeşil: senaryo A/B/C ağırlık merkezi izdüşümleri (X, Z mm). Raporun Şekil 3'ü aynı düzeni alttan (−Y) gösterdiği için aynalıdır.</figcaption>
+  </figure>
+</section>
+
+<section id="yukler">
+  <h2>6. Yük senaryoları</h2>
+  <div class="tblwrap"><table>
+    <thead><tr><th>Senaryo</th><th>Bileşenler</th><th class="num">C061176 toplam (kg)</th></tr></thead>
+    <tbody>
+      <tr><td><b>A</b> Kuru makine</td><td>Makine gövdesi (MACHINE grubu)</td><td class="num">735,4</td></tr>
+      <tr><td><b>B</b> Tank su dolu</td><td>A + yıkama suyu</td><td class="num">926,3</td></tr>
+      <tr><td><b>C</b> Su + sepet yükü</td><td>B + 300 kg ürün yükü</td><td class="num">1 226,3</td></tr>
+    </tbody>
+  </table></div>
+  <h3>Yıkama suyu</h3>
+  <p>Tank iç hacmi, <code>machine.json → tank</code> ile verilen kutu yaklaşımıyla hesaplanır. Tank tabanı eğimli olduğu için (Y<sub>taban</sub> 231 → 270 mm) hacim bir dikdörtgen prizma artı bir kama olarak alınır:</p>
+  <div class="formula">
+    L<sub>x</sub> = (x<sub>1</sub> − x<sub>0</sub>) , &nbsp; L<sub>z</sub> = (z<sub>1</sub> − z<sub>0</sub>)<br>
+    V<sub>kutu</sub> = L<sub>x</sub> · L<sub>z</sub> · (Y<sub>seviye</sub> − Y<sub>taban,üst</sub>)<br>
+    V<sub>kama</sub> = L<sub>x</sub> · L<sub>z</sub> · (Y<sub>taban,üst</sub> − Y<sub>taban,alt</sub>) / 2<br>
+    V<sub>su</sub> = V<sub>kutu</sub> + V<sub>kama</sub> , &nbsp; M<sub>su</sub> = V<sub>su</sub> · 998 kg/m³
+    <small>AM<sub>su</sub>: plan merkezi ((x<sub>0</sub>+x<sub>1</sub>)/2, (z<sub>0</sub>+z<sub>1</sub>)/2); yükseklik (Y<sub>taban,üst</sub> + Y<sub>seviye</sub>)/2. Seviye duyarlılığı: L<sub>x</sub>·L<sub>z</sub>·0,1 m = litre / 100 mm.</small>
+  </div>
+  <p><b>C061176 sayıları:</b> L<sub>x</sub> = 0,494 m, L<sub>z</sub> = 1,293 m, seviye 550 mm. V<sub>kutu</sub> = 0,494·1,293·0,280 = 0,1788 m³; V<sub>kama</sub> = 0,494·1,293·0,039/2 = 0,0125 m³; V<sub>su</sub> = <b>191,3 L → 190,9 kg</b>, AM (404, 410, 74) mm. Her 100 mm seviye = 63,9 L.</p>
+  <h3>Sepet yükü</h3>
+  <p>Döner sepet alt montajının (<code>basket_path_token</code>) kütle ağırlıklı AM'si bulunur (C061176: sepet 65,0 kg, AM ≈ (4, 909, 0)). Ürün yükü (<code>payload_kg</code> = 300 kg) sepet plan merkezine, <code>payload_y_mm</code> = 1 000 mm kotuna düzgün yayılı kabul edilir. Sepet merkezi ayak düzeninin merkeziyle çakıştığından bu yük dört ayağa neredeyse eşit dağılır.</p>
+  <h3>Senaryo birleştirme</h3>
+  <div class="formula">M<sub>senaryo</sub> = Σ M<sub>k</sub> &nbsp;&nbsp;&nbsp; <b>r</b><sub>AM,senaryo</sub> = Σ M<sub>k</sub>·<b>r</b><sub>AM,k</sub> / Σ M<sub>k</sub><small>k ∈ {makine, su, yük}. Örnek B: x<sub>AM</sub> = (735,35·134,95 + 190,92·404) / 926,27 = 190,4 mm.</small></div>
+</section>
+
+<section id="reaksiyon">
+  <h2>7. Ayak reaksiyonlarının çözümü</h2>
+  <h3>Statik denge</h3>
+  <p>Düşey yük W = M·g dört ayakta R<sub>1..4</sub> reaksiyonlarıyla dengelenir. Kütle cinsinden (g sadeleşir) üç denge denklemi vardır:</p>
+  <div class="formula">
+    Σ R<sub>i</sub> = M<br>
+    Σ R<sub>i</sub>·x<sub>i</sub> = M·x<sub>AM</sub> &nbsp;&nbsp; (Z ekseni etrafında moment)<br>
+    Σ R<sub>i</sub>·z<sub>i</sub> = M·z<sub>AM</sub> &nbsp;&nbsp; (X ekseni etrafında moment)
+  </div>
+  <p>Üç denklem, dört bilinmeyen: sistem <b>statik olarak belirsizdir</b> (hiperstatik). Tek çözüm için ek bir fiziksel kabul gerekir.</p>
+  <h3>Kabul: rijit gövde, eşit rijitlikte dört yay</h3>
+  <p>Gövde rijit, her ayak aynı k rijitliğinde düşey bir yay ve zemin düz kabul edilir. Rijit bir plakanın çökmesi plan koordinatlarında doğrusal bir düzlemdir: w(x, z) = a + b·x + c·z. Dolayısıyla R<sub>i</sub> = k·w(x<sub>i</sub>, z<sub>i</sub>) = k·(a + b·x<sub>i</sub> + c·z<sub>i</sub>). Bu, çözüm vektörünün denge matrisinin satır uzayında olması demektir; o da tam olarak <b>minimum norm (en küçük kareler) çözümü</b>dür.</p>
+  <div class="formula">
+    A = [ 1 1 1 1 ; x<sub>1</sub> x<sub>2</sub> x<sub>3</sub> x<sub>4</sub> ; z<sub>1</sub> z<sub>2</sub> z<sub>3</sub> z<sub>4</sub> ] &nbsp; (3×4)<br>
+    b = [ M ; M·x<sub>AM</sub> ; M·z<sub>AM</sub> ]<br>
+    <b>R = A<sup>+</sup> · b</b> &nbsp;&nbsp; (Moore–Penrose pseudo-inverse, <code>numpy.linalg.pinv</code>)
+  </div>
+  <h3>Simetrik düzen için kapalı form</h3>
+  <p>Ayaklar ayak-düzeni merkezine göre simetrikse (Σx<sub>i</sub> = Σz<sub>i</sub> = Σx<sub>i</sub>z<sub>i</sub> = 0, C061176'daki kare düzen böyledir) pseudo-inverse çözümü şu ifadeye indirgenir:</p>
+  <div class="formula">
+    R<sub>i</sub> = M · [ 1/n + e<sub>x</sub>·x<sub>i</sub> / Σx<sub>j</sub>² + e<sub>z</sub>·z<sub>i</sub> / Σz<sub>j</sub>² ]
+    <small>n = 4; e<sub>x</sub>, e<sub>z</sub> = AM'nin ayak düzeni merkezine göre kaçıklığı. Kare düzende Σx² = Σz² = 4·728² = 2 119 936 mm².</small>
+  </div>
+  <h3>Sayısal örnek: Senaryo A, C061176</h3>
+  <p>M = 735,35 kg, e<sub>x</sub> = 134,95 mm, e<sub>z</sub> = −52,09 mm.</p>
+  <div class="tblwrap"><table>
+    <thead><tr><th>Ayak</th><th class="num">x<sub>i</sub></th><th class="num">z<sub>i</sub></th><th class="num">1/4</th><th class="num">e<sub>x</sub>·x<sub>i</sub>/Σx²</th><th class="num">e<sub>z</sub>·z<sub>i</sub>/Σz²</th><th class="num">Pay</th><th class="num">R<sub>i</sub> (kg)</th></tr></thead>
+    <tbody>
+      <tr><td>F1 Ön-Sol</td><td class="num">+728</td><td class="num">+728</td><td class="num">0,2500</td><td class="num">+0,0463</td><td class="num">−0,0179</td><td class="num">0,2785</td><td class="num"><b>204,8</b></td></tr>
+      <tr><td>F2 Ön-Sağ</td><td class="num">+728</td><td class="num">−728</td><td class="num">0,2500</td><td class="num">+0,0463</td><td class="num">+0,0179</td><td class="num">0,3142</td><td class="num"><b>231,1</b></td></tr>
+      <tr><td>F3 Arka-Sağ</td><td class="num">−728</td><td class="num">−728</td><td class="num">0,2500</td><td class="num">−0,0463</td><td class="num">+0,0179</td><td class="num">0,2215</td><td class="num"><b>162,9</b></td></tr>
+      <tr><td>F4 Arka-Sol</td><td class="num">−728</td><td class="num">+728</td><td class="num">0,2500</td><td class="num">−0,0463</td><td class="num">−0,0179</td><td class="num">0,1858</td><td class="num"><b>136,6</b></td></tr>
+      <tr><td><b>Toplam</b></td><td></td><td></td><td></td><td></td><td></td><td class="num">1,0000</td><td class="num"><b>735,4</b></td></tr>
+    </tbody>
+  </table></div>
+  <p>Paylar toplamı 1 ve Σ R<sub>i</sub>·x<sub>i</sub> = M·e<sub>x</sub> sağlanır. Yük, AM'nin kaydığı tarafa (ön ve sağ) doğru artar. Aynı işlem B ve C senaryoları için kendi M ve AM değerleriyle tekrarlanır.</p>
+  <div class="note"><b>Neden eşit paylaşım (M/4) değil?</b> Eşit paylaşım yalnızca AM tam merkezde ise doğrudur. Kaçıklık varsa moment dengesi bozulur. Pseudo-inverse çözümü hem üç denge denklemini tam sağlar hem de ayaklar arası farkı fiziksel kabule (eşit yaylar) göre en küçük tutar.</div>
+</section>
+
+<section id="turev">
+  <h2>8. Türetilen büyüklükler</h2>
+  <div class="tblwrap"><table>
+    <thead><tr><th>Büyüklük</th><th>Formül</th><th>C061176 örneği (Senaryo C, F2)</th></tr></thead>
+    <tbody>
+      <tr><td>Kuvvet</td><td>N<sub>i</sub> = R<sub>i</sub> · 9,81 m/s²</td><td>375,9 kg → 3 687 N = 3,69 kN</td></tr>
+      <tr><td>Taban basıncı</td><td>p<sub>i</sub> = N<sub>i</sub> / A<sub>taban</sub>, A = π·d²/4 (Ø108 → 91,6 cm²), Pa → bar ÷10⁵</td><td>3 687 N / 0,00916 m² = 402 kPa = <b>4,0 bar</b></td></tr>
+      <tr><td>Ürün yükü duyarlılığı</td><td>R(100 kg, AM<sub>sepet</sub>) aynı pseudo-inverse ile</td><td>≈ 25 kg / ayak / 100 kg ürün</td></tr>
+      <tr><td>Su seviyesi duyarlılığı</td><td>R(L<sub>x</sub>·L<sub>z</sub>·0,1·998 kg, AM<sub>su</sub>)</td><td>63,8 kg → ön ayaklar 26 / 23 kg, arka 5 / 9 kg</td></tr>
+      <tr><td>Tasarım yükü önerisi</td><td>R<sub>tasarım</sub> = 1,25 · max R<sub>i</sub> (dinamik + ayar belirsizliği)</td><td>1,25 · 375,9 = <b>470 kg (4,61 kN)</b></td></tr>
+      <tr><td>Kaçıklık oranı</td><td>e<sub>x</sub> / 728, e<sub>z</sub> / 728</td><td>Kuru: %9 (X), %4 (Z)</td></tr>
+    </tbody>
+  </table></div>
+</section>
+
+<section id="araba">
+  <h2>9. Yükleme arabası (ayrı sistem)</h2>
+  <p>Montaj yolunda <code>trolley_root</code> (C011459) geçen tüm parçalar TROLLEY grubuna ayrılır; makine kütlesine <b>dahil edilmez</b>, çünkü araba kendi dört tekerleği üzerinde zemine basar ve makineye yalnızca kenetlenmiştir. Tekerlek merkezleri, adı <code>caster_parts</code> (C011192 / C011193) olan örneklerin global sınır kutusu merkezinden alınır ve aynı pseudo-inverse çözümü araba kütlesi ve AM'si için uygulanır.</p>
+  <p>C061176: araba 40,1 kg, AM (1 436, 528, 0); tekerlek yükleri T1–T4 ≈ 9,5 / 10,5 / 9,4 / 10,7 kg (boş araba). Sepet ve ürün arabaya alındığında bu değerlere eklenir.</p>
+</section>
+
+<section id="altmontaj">
+  <h2>10. Alt montaj kırılımı</h2>
+  <p>Her MACHINE parçasının montaj yolu (<code>path</code>, ör. <code>C061176/C059399/C059405</code>) bölünür ve kökten sonraki ilk düğüm "alt montaj" adı olarak alınır; kök seviyedeki parçalar "(kök seviye parça)" grubuna girer. Her alt montaj için parça sayısı, kütle toplamı ve kütle ağırlıklı AM hesaplanır; ilk 8 alt montaj yatay çubuk grafikte gösterilir.</p>
+  <div class="tblwrap"><table>
+    <thead><tr><th>Alt montaj</th><th>Tanım</th><th class="num">Parça</th><th class="num">Kütle (kg)</th></tr></thead>
+    <tbody>
+      <tr><td>C059399</td><td>Ana gövde: şase, tank, kabin, kapak kızakları</td><td class="num">253</td><td class="num">534,9</td></tr>
+      <tr><td>C058280_CLOSED</td><td>Döner sepet (Ø1 200)</td><td class="num">57</td><td class="num">65,0</td></tr>
+      <tr><td>C032692_Flex</td><td>Elektrik panosu (−Z tarafı)</td><td class="num">153</td><td class="num">45,4</td></tr>
+      <tr><td>(kök seviye parça)</td><td>Pompa, fan, vana, hortum vb.</td><td class="num">9</td><td class="num">41,3</td></tr>
+      <tr><td>C011077_Varsayılan</td><td>Sepet tahrik dişli grubu</td><td class="num">14</td><td class="num">8,6</td></tr>
+      <tr><td>Diğer 9 alt montaj</td><td>Kızak kolonları, boru grupları, mil/rulman, profiller</td><td class="num">136</td><td class="num">40,2</td></tr>
+    </tbody>
+  </table></div>
+</section>
+
+<section id="kalite">
+  <h2>11. 316 / 304 kalite anahtarı (grade.py)</h2>
+  <p>Kalite yalnızca <b>paslanmaz sac ve paslanmaz bağlantı elemanı yoğunluğunu</b> değiştirir; geometri, sınıflandırma kuralları ve diğer yoğunluklar aynıdır.</p>
+  <div class="tblwrap"><table>
+    <thead><tr><th>GRADE</th><th>EN no</th><th class="num">ρ sac (g/cm³)</th><th>Cıvata sınıfı</th><th>Ara çıktı klasörü</th><th>Rapor klasörü</th></tr></thead>
+    <tbody>
+      <tr><td>316 (varsayılan)</td><td>1.4401</td><td class="num">8,00</td><td>A4</td><td>output/</td><td>AISI 316/</td></tr>
+      <tr><td>304</td><td>1.4301</td><td class="num">7,90</td><td>A2</td><td>output_304/</td><td>AISI 304/</td></tr>
+    </tbody>
+  </table></div>
+  <p>Rapor metinleri 316 esas alınarak yazılmıştır; 304 seçildiğinde <code>display()</code> fonksiyonu "AISI 316", "1.4401", "8,0 kg/dm³", "A4" gibi ifadeleri metinlerde ve tablolarda otomatik değiştirir. Sonuç: 304 için makine kütlesi 727,4 kg (−8,0 kg, yaklaşık %1,1), en yüklü ayak Senaryo C'de 373,4 kg.</p>
+</section>
+
+<section id="gorsel">
+  <h2>12. 3D görseller ve grafikler (figures.py)</h2>
+  <p>Adım 1'de üretilen STL mesh'ler PyVista ile ekran dışı (off-screen) render edilir. Mesh'ler malzeme sınıfına, gruba (makine/araba) ve ayak alt montajına göre birleştirilir. Her görsel üç dil için ayrı başlık ve etiketle <code>fig_tr/</code>, <code>fig_en/</code>, <code>fig_de/</code> klasörlerine yazılır.</p>
+  <div class="tblwrap"><table>
+    <thead><tr><th>Dosya</th><th>İçerik</th><th>Teknik ayrıntı</th></tr></thead>
+    <tbody>
+      <tr><td>fig1_iso_malzeme</td><td>Malzeme sınıfına göre renkli izometrik</td><td>Sınıf başına renk haritası, lejant</td></tr>
+      <tr><td>fig2_gorunusler</td><td>Ön (+X), yan (−Z), üst (+Y) ortografik</td><td>Paralel projeksiyon, 1×3 alt pencere</td></tr>
+      <tr><td>fig3_alt_ayaklar_cg</td><td>Alt görünüş: ayaklar, 3 senaryo AM izdüşümü, su kutusu</td><td>AM'ler küre, ayak karesi turuncu çerçeve, −Y yönünden bakış (aynalı)</td></tr>
+      <tr><td>fig4a/b/c_iso_yukler</td><td>Senaryo A/B/C: AM küresi, zemine düşey çizgi, ayak yükleri</td><td>Ayak altındaki turuncu silindir yüksekliği = 1,2 × R<sub>i</sub> mm (yükle orantılı)</td></tr>
+      <tr><td>fig5_kesitler</td><td>Z = 0 ve X = 380 kesitleri</td><td>Mesh clip; su kutusu, pompa ve motor renkli</td></tr>
+      <tr><td>fig6_satinalma</td><td>Efektif yoğunluk atanan parçalar + pano elemanları</td><td>Parça adı ve kütle etiketi AM noktasında</td></tr>
+      <tr><td>fig7_araba</td><td>Yükleme arabası ve tekerlek yükleri T1–T4</td><td>Makine %15 saydam</td></tr>
+      <tr><td>fig8_ayak</td><td>Ayak grubu yakın plan</td><td>Kamera F1 ayağına odaklı</td></tr>
+      <tr><td>chart_ayak_yukleri</td><td>Ayak başına reaksiyon, 3 senaryo gruplu çubuk</td><td>matplotlib, değer etiketleri</td></tr>
+      <tr><td>chart_alt_montaj</td><td>İlk 8 alt montajın kütlesi, yatay çubuk</td><td>matplotlib</td></tr>
+    </tbody>
+  </table></div>
+  <p>Su hacmi her görselde <code>tank</code> ölçülerinden kurulan yarı saydam mavi kutu ile temsil edilir.</p>
+</section>
+
+<section id="rapor">
+  <h2>13. Rapor üretimi (PDF, HTML, Excel)</h2>
+  <h3>Dil bağımsız içerik modeli</h3>
+  <p><code>report_multi.build_content(lang)</code> raporu bir <b>blok listesi</b> olarak üretir: <code>cover</code>, <code>h1</code>, <code>h2</code>, <code>p</code>, <code>small</code>, <code>cap</code>, <code>table</code> (satırlar + mm cinsinden sütun genişlikleri), <code>fig</code> (dosya, mm genişlik, altyazı), <code>pagebreak</code>. Tüm sayılar <code>summary.json</code> ve <code>parts_mass.csv</code>'den okunur, metinler <code>i18n.py</code> içindeki TR/EN/DE sözlüğünden alınır ve biçimlendirilir (TR/DE: ondalık virgül, binlik nokta; EN: tersi). Aynı blok listesi iki ayrı arka uçla çizilir, bu yüzden PDF ve HTML içerik olarak birebir aynıdır.</p>
+  <h3>Sayfa planı (12 sayfa / dil)</h3>
+  <div class="tblwrap"><table>
+    <thead><tr><th>Sayfa</th><th>İçerik</th></tr></thead>
+    <tbody>
+      <tr><td>1</td><td>Kapak, Şekil 1 (malzeme renkli izometrik), özet tablo (kütle, AM, ayak yükleri, en yüklü ayak kg/kN)</td></tr>
+      <tr><td>2</td><td>Amaç, model bilgileri, hesap yöntemi, malzeme yoğunlukları</td></tr>
+      <tr><td>3</td><td>Satın alma bileşenleri, hariç tutulanlar, işletme yükleri (su, sepet yükü, kabin konumu)</td></tr>
+      <tr><td>4</td><td>Kütle dağılımı, alt montaj grafiği ve tablosu</td></tr>
+      <tr><td>5</td><td>Şekil 3 (alt görünüş), ayak reaksiyon tablosu (kg, kN, bar)</td></tr>
+      <tr><td>6</td><td>Ayak yükleri grafiği ve yorum (farklar, duyarlılıklar, tasarım yükü)</td></tr>
+      <tr><td>7–10</td><td>3D görseller: senaryo A/B/C, ortografik görünüşler, kesitler, satın alma parçaları, araba, ayak</td></tr>
+      <tr><td>11</td><td>Yükleme arabası tekerlek yükleri; belirsizlikler ve sınırlamalar</td></tr>
+      <tr><td>12</td><td>Ek A: en ağır 40 parça (adet, sınıf, hacim, t ≈ 2V/A, birim ve toplam kütle)</td></tr>
+    </tbody>
+  </table></div>
+  <h3>Arka uçlar</h3>
+  <ul>
+    <li><b>PDF (ReportLab):</b> A4, kenar boşlukları 17/16 mm, DejaVu Sans (Türkçe/Almanca karakterler için). Üç dil art arda eklenir; sayfa altlığındaki metin o anki dile göre yazılır. Çıktı 36 sayfa.</li>
+    <li><b>TR PDF (PyMuPDF):</b> 36 sayfalık dosyanın ilk üçte biri (sayfa 1–12) ayrı dosyaya kopyalanır.</li>
+    <li><b>HTML:</b> Tek dosya. Her dil için 210×297 mm sabit boyutlu <code>.page</code> bölümleri; görseller base64 olarak gömülür (fotoğraflar JPEG %84, grafikler PNG; genişlik 1 600 px'e düşürülür). Üst çubuktaki bayraklı dil düğmeleri ilgili bölümü gösterir, seçim <code>localStorage</code> ve <code>?lang=</code> parametresiyle hatırlanır. "PDF çıktısı al" düğmesi tarayıcının yazdırma işlevini çağırır; <code>@media print</code> kuralları sayfa kesimlerini ve zebra renklerini korur.</li>
+    <li><b>Excel (openpyxl):</b> "Parçalar" (762 satır: parça, yol, sınıf, yoğunluk, hacim, kütle, AM, t, grup), "Makine özet (parça no)", "Alt montajlar", "Ayak yükleri" sayfaları.</li>
+  </ul>
+</section>
+
+<section id="varsayim">
+  <h2>14. Varsayımlar ve sınırlamalar</h2>
+  <ul>
+    <li><b>Statik belirsizlik:</b> Dört ayaklı rijit gövdede gerçek dağılım ayak ayarına ve zemin düzlüğüne bağlıdır; 0,5 mm'lik ayar farkı köşegen çiftler arasında onlarca kg aktarabilir. Değerler "eşit rijitlikte dört yay" idealizasyonudur; en yüklü ayak için ≥ %25 pay önerilir.</li>
+    <li><b>Malzeme:</b> Adında malzeme bilgisi olmayan tüm parçalar paslanmaz kabul edilir; bir kısmı 304 ya da karbon çeliği olsa da yoğunluk farkı ≤ %2'dir.</li>
+    <li><b>Satın alma parçaları:</b> Efektif yoğunlukla tahmin edilir (C061176'da toplam ≈ 61 kg, makinenin %8'i); ±%30 hata toplamda ±18 kg demektir. Katalog değerleri varsa güncellenmelidir.</li>
+    <li><b>Su hacmi:</b> Kutu + kama yaklaşımı, seviye 550 mm varsayımı. Gerçek seviye biliniyorsa 63,9 L / 100 mm duyarlılığı ile düzeltilir.</li>
+    <li><b>Modellenmemiş kütleler:</b> Kablo, boru içi sıvı, boya, conta, cam, yalıtım dahil değildir (tahmini &lt; %2). Hacmi hesaplanamayan 5 küçük parça hariçtir.</li>
+    <li><b>Kabin konumu:</b> Kabin düşey kızaklarda hareket eder; plan izdüşümünde AM değişmediği için ayak yükleri değişmez, yalnızca AM yüksekliği artar.</li>
+    <li><b>Dinamik etkiler:</b> Sepet dönüşü, pompa titreşimi ve kapak hareketi değerlendirilmemiştir.</li>
+  </ul>
+</section>
+
+<section id="sonuc">
+  <h2>15. C061176 sonuç özeti (AISI 316)</h2>
+  <div class="tblwrap"><table>
+    <thead><tr><th>Büyüklük</th><th class="num">A Kuru</th><th class="num">B Su dolu</th><th class="num">C Su + 300 kg</th></tr></thead>
+    <tbody>
+      <tr><td>Toplam kütle (kg)</td><td class="num">735</td><td class="num">926</td><td class="num">1 226</td></tr>
+      <tr><td>AM X / Y / Z (mm)</td><td class="num">135 / 1 107 / −52</td><td class="num">190 / 964 / −26</td><td class="num">145 / 973 / −20</td></tr>
+      <tr><td>F1 Ön-Sol (kg)</td><td class="num">205</td><td class="num">284</td><td class="num">359</td></tr>
+      <tr><td>F2 Ön-Sağ (kg)</td><td class="num">231</td><td class="num">300</td><td class="num">376</td></tr>
+      <tr><td>F3 Arka-Sağ (kg)</td><td class="num">163</td><td class="num">179</td><td class="num">254</td></tr>
+      <tr><td>F4 Arka-Sol (kg)</td><td class="num">137</td><td class="num">163</td><td class="num">237</td></tr>
+      <tr><td>En yüklü ayak (kg / kN)</td><td class="num">231 / 2,27</td><td class="num">300 / 2,95</td><td class="num">376 / 3,69</td></tr>
+      <tr><td>En yüksek taban basıncı (bar)</td><td class="num">2,5</td><td class="num">3,2</td><td class="num">4,0</td></tr>
+    </tbody>
+  </table></div>
+  <p>Tasarım yükü önerisi: 376 × 1,25 ≈ <b>470 kg (4,6 kN) / ayak</b>. AISI 304 seçiminde tüm değerler yaklaşık %1 düşer (makine 727 kg, F2 Senaryo C 373 kg).</p>
+</section>
+
+<section id="dosya">
+  <h2>16. Dosya haritası</h2>
+<pre>WEIGHT DISTRUBUTION/
+  scripts/
+    grade.py          kalite ve makine klasörü seçimi, display()/localize()
+    extract_step.py   STEP → instances.json + meshes/
+    compute.py        MAT tablosu, classify(), reactions(), senaryolar → summary.json, parts_mass.csv, xlsx
+    figures.py        PyVista/matplotlib görseller → fig_tr|en|de/
+    i18n.py           TR/EN/DE metinler, sayı biçimlendirme (fmt0/fmt1/fmt2)
+    report_multi.py   build_content() blok modeli + ReportLab PDF arka ucu
+    html_report.py    aynı bloklar → tek dosya HTML
+    tr_pdf.py         TR sayfalarını ayırma
+    tools/highlight.py  parça tanımlama için yardımcı render
+  KBN 1B P DS MULTİ 1350/
+    C061176.STEP, machine.json
+    output/           instances.json, meshes/, summary.json, parts_mass.csv, fig_*/   (316)
+    output_304/       summary.json, parts_mass.csv, fig_*/                            (304)
+    AISI 316/, AISI 304/   C061176_Rapor.html, *_TR_EN_DE.pdf, *_Raporu.pdf (TR), *_kutle_listesi.xlsx</pre>
+  <p><b>Yeni makine eklerken:</b> klasör + STEP + <code>machine.json</code> (ayak parçası, taban çapı, araba kökü, tekerlek parçaları, pano alt montajı, açık malzeme listesi, tank ölçüleri, sepet yolu, ürün yükü) hazırlanır; <code>i18n.py</code> içindeki makineye özgü açıklamalar (alt montaj tanımları, satın alma parçaları, genel boyutlar, yorum paragrafları) güncellenir.</p>
+</section>
+
+<footer>Hesap motoru dokümantasyonu · Python 3.12 · OpenCASCADE 7.8 (cadquery-ocp) · NumPy · pandas · PyVista · matplotlib · ReportLab · PyMuPDF</footer>
+</div>
+</body>
+</html>
